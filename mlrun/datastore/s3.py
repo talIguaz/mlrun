@@ -42,14 +42,21 @@ class S3Store(DataStore):
             Body=open(src_path, "rb")
         )
 
-    def get(self, key, size=None, offset=0):
-        obj = self.s3.Object(self.endpoint, self._join(key)[1:])
+    def get(self, key, size=None, offset=0, handler=None):
+        if handler:
+            obj = handler
+        else:
+            obj = self.get_handler(key)
         if size or offset:
             return obj.get(Range=get_range(size, offset))["Body"].read()
         return obj.get()["Body"].read()
 
-    def put(self, key, data, append=False):
-        self.s3.Object(self.endpoint, self._join(key)[1:]).put(Body=data)
+    def put(self, key, data, append=False, handler=None):
+        if handler:
+            obj = handler
+        else:
+            obj = self.get_handler(key)
+        obj.put(Body=data)
 
     def stat(self, key):
         obj = self.s3.Object(self.endpoint, self._join(key)[1:])
@@ -63,3 +70,6 @@ class S3Store(DataStore):
         key_length = len(key)
         bucket = self.s3.Bucket(self.endpoint)
         return [obj.key[key_length:] for obj in bucket.objects.filter(Prefix=key)]
+
+    def get_handler(self, key, append=False):
+        return self.s3.Object(self.endpoint, self._join(key)[1:])

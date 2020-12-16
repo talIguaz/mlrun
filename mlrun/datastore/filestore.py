@@ -29,7 +29,13 @@ class FileStore(DataStore):
     def _join(self, key):
         return path.join(self.subpath, key)
 
-    def get(self, key, size=None, offset=0):
+    def get(self, key, size=None, offset=0, handler=None):
+        if handler:
+            if offset:
+                handler.seek(offset)
+            if not size:
+                size = -1
+            return handler.read(size)
         with open(self._join(key), "rb") as fp:
             if offset:
                 fp.seek(offset)
@@ -37,10 +43,14 @@ class FileStore(DataStore):
                 size = -1
             return fp.read(size)
 
-    def put(self, key, data, append=False):
+    def put(self, key, data, append=False, handler=None):
         dir = path.dirname(self._join(key))
         if dir:
             makedirs(dir, exist_ok=True)
+
+        if handler:
+            handler.write(data)
+
         mode = "a" if append else "w"
         if isinstance(data, bytes):
             mode = mode + "b"
@@ -69,3 +79,7 @@ class FileStore(DataStore):
 
     def listdir(self, key):
         return listdir(key)
+
+    def get_handler(self, key, append=False):
+        mode = "a" if append else "w"
+        return open(self._join(key), mode)

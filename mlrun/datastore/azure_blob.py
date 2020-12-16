@@ -37,13 +37,19 @@ class AzureBlobStore(DataStore):
         with open(src_path, "rb") as data:
             blob_client.upload_blob(data, overwrite=True)
 
-    def get(self, key, size=None, offset=0):
-        blob_client = self.bsc.get_blob_client(container=self.endpoint, blob=key[1:])
+    def get(self, key, size=None, offset=0, handler=None):
+        if handler:
+            blob_client = handler
+        else:
+            blob_client = self.get_handler(key)
         size = size if size else None
         return blob_client.download_blob(offset, size).readall()
 
-    def put(self, key, data, append=False):
-        blob_client = self.bsc.get_blob_client(container=self.endpoint, blob=key[1:])
+    def put(self, key, data, append=False, handler=None):
+        if handler:
+            blob_client = handler
+        else:
+            blob_client = self.get_handler(key, append)
         # Note that append=True is not supported. If the blob already exists, this call will fail
         blob_client.upload_blob(data, overwrite=True)
 
@@ -62,3 +68,6 @@ class AzureBlobStore(DataStore):
         container_client = self.bsc.get_container_client(self.endpoint)
         blob_list = container_client.list_blobs(name_starts_with=key)
         return [blob.name[key_length:] for blob in blob_list]
+
+    def get_handler(self, key, append=False):
+        return self.bsc.get_blob_client(container=self.endpoint, blob=key[1:])

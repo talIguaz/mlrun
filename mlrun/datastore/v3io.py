@@ -72,7 +72,7 @@ class V3ioStore(DataStore):
     def upload(self, key, src_path):
         http_upload(self.url + self._join(key), src_path, self.headers, None)
 
-    def get(self, key, size=None, offset=0):
+    def get(self, key, size=None, offset=0, handler=None):
         headers = self.headers
         if size or offset:
             headers = deepcopy(headers)

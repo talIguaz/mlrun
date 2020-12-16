@@ -104,6 +104,9 @@ class DataStore:
     def upload(self, key, src_path):
         pass
 
+    def get_handler(self, key, append=False):
+        pass
+
     def as_df(self, key, columns=None, df_module=None, format="", **kwargs):
         df_module = df_module or pd
         if key.endswith(".csv") or format == "csv":
